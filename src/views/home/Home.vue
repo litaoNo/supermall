@@ -3,11 +3,20 @@
         <nav-bar class="home-nav">
             <div slot="center">购物街</div>
         </nav-bar>
-        <home-swiper :banners="banners"></home-swiper>
-        <recommend-view :recommends="recommend"></recommend-view>
-        <feature-view></feature-view>
-        <tab-control class="tab-control" :titles="['流行','精选','新款']" @itemClick="tabClick"></tab-control>
-        <goods-list :goods="goods[currentType].list"></goods-list>
+
+        <scroll class="content" ref="scroll"
+                :probe-type="3"
+                @scroll="contentScroll"
+                :pull-up-load="true"
+                @pullUpLoad="loadMore">
+            <home-swiper :banners="banners"></home-swiper>
+            <recommend-view :recommends="recommend"></recommend-view>
+            <feature-view></feature-view>
+            <tab-control class="tab-control" :titles="['流行','精选','新款']" @itemClick="tabClick"></tab-control>
+            <goods-list :goods="goods[currentType].list"></goods-list>
+        </scroll>
+        <back-top @click.native="backClick" v-show="isShowBackTop"></back-top>
+
     </div>
 </template>
 
@@ -18,6 +27,8 @@
     import FeatureView from "./childComps/FeatureView"
     import TabControl from "components/content/tabControl/TabControl"
     import GoodsList from "components/content/goods/GoodsList"
+    import Scroll from "components/common/scroll/Scroll"
+    import BackTop from "components/content/backTop/BackTop"
 
     import {getMultidata,getHomeGoods} from "network/home"
 
@@ -29,7 +40,9 @@
             RecommendView,
             FeatureView,
             TabControl,
-            GoodsList
+            GoodsList,
+            Scroll,
+            BackTop
         },
         data() {
             return {
@@ -41,6 +54,7 @@
                     'sell': {page: 0, list: []}
                 },
                 currentType: 'pop',
+                isShowBackTop:false
             }
         },
         created() {
@@ -61,13 +75,13 @@
                 })
             },
 
-
             getHomeGoods(type){
                 const page = this.goods[type].page + 1;
                 getHomeGoods(type,page).then( res => {
                     this.goods[type].list.push(...res.data.data.list)
                     this.goods[type].list.page += 1;
-                    //console.log(res)
+
+                    this.$refs.scroll.finishPullUp()
                 })
             },
 
@@ -84,6 +98,18 @@
                         break
                 }
             },
+
+            backClick(){
+                this.$refs.scroll.scrollTo(0,0,500)
+            },
+
+            contentScroll(position){
+                this.isShowBackTop = - position.y > 1000
+            },
+
+            loadMore(){
+                this.getHomeGoods(this.currentType)
+            }
         }
     }
 </script>
@@ -101,12 +127,20 @@
 
     #home {
         padding-top: 44px;
-        height: 2000px;
     }
 
     .tab-control {
         position: sticky;
         top: 44px;
         z-index: 9;
+    }
+
+    .content {
+        position: absolute;
+        left: 0;
+        right: 0;
+        top:44px;
+        bottom: 49px;
+        overflow: hidden;
     }
 </style>

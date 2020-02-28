@@ -3,16 +3,18 @@
         <nav-bar class="home-nav">
             <div slot="center">购物街</div>
         </nav-bar>
+        <tab-control :titles="['流行','精选','新款']" @itemClick="tabClick" ref="tabControl1"
+                     class="tab-control" v-show="isTabFixed"></tab-control>
 
         <scroll class="content" ref="scroll"
                 :probe-type="3"
                 @scroll="contentScroll"
                 :pull-up-load="true"
                 @pullUpLoad="loadMore">
-            <home-swiper :banners="banners"></home-swiper>
+            <home-swiper :banners="banners" @swiperImageLoad="swiperImageLoad"></home-swiper>
             <recommend-view :recommends="recommend"></recommend-view>
             <feature-view></feature-view>
-            <tab-control class="tab-control" :titles="['流行','精选','新款']" @itemClick="tabClick"></tab-control>
+            <tab-control :titles="['流行','精选','新款']" @itemClick="tabClick" ref="tabControl2"></tab-control>
             <goods-list :goods="goods[currentType].list"></goods-list>
         </scroll>
         <back-top @click.native="backClick" v-show="isShowBackTop"></back-top>
@@ -31,6 +33,8 @@
     import BackTop from "components/content/backTop/BackTop"
 
     import {getMultidata,getHomeGoods} from "network/home"
+    import {debounce} from "common/utils";
+    import {itemImgLIstenerMixin} from "../../common/mixin";
 
     export default {
         name: "Home",
@@ -44,6 +48,7 @@
             Scroll,
             BackTop
         },
+        mixins:[itemImgLIstenerMixin],
         data() {
             return {
                 banners: null,
@@ -54,7 +59,11 @@
                     'sell': {page: 0, list: []}
                 },
                 currentType: 'pop',
-                isShowBackTop:false
+                isShowBackTop:false,
+                isTabFixed:false,
+                tabOffsetTop:0,
+                saveY:0,
+
             }
         },
         created() {
@@ -64,6 +73,27 @@
             this.getHomeGoods('sell');
 
         },
+
+        mounted(){
+/*            let newRefresh = debounce(this.$refs.scroll.refresh,50);
+            this.itemImgListener = ()=>{
+                newRefresh()
+            }
+            this.$bus.$on("itemImageLoad",this.itemImgListener)*/
+        },
+
+        activated(){
+            this.$refs.scroll.scrollTo(0,this.saveY,0)
+            this.$refs.scroll.refresh()
+        },
+
+        deactivated(){
+            this.saveY = this.$refs.scroll.getScrollY()
+
+            //2.取消全局事件的监听
+            this.$bus.$off('itemImageLoad',this.itemImgListener)
+        },
+
         methods: {
             getMultidata() {
                 getMultidata().then(res => {
@@ -85,6 +115,7 @@
                 })
             },
 
+
             tabClick(index) {
                 switch (index) {
                     case 0:
@@ -97,6 +128,9 @@
                         this.currentType = 'sell'
                         break
                 }
+
+                this.$refs.tabControl1.currentIndex = index
+                this.$refs.tabControl2.currentIndex = index
             },
 
             backClick(){
@@ -105,10 +139,15 @@
 
             contentScroll(position){
                 this.isShowBackTop = - position.y > 1000
+                this.isTabFixed = - position.y > this.tabOffsetTop
             },
 
             loadMore(){
                 this.getHomeGoods(this.currentType)
+            },
+
+            swiperImageLoad(){
+                this.tabOffsetTop = this.$refs.tabControl2.$el.offsetTop
             }
         }
     }
@@ -118,22 +157,24 @@
     .home-nav {
         background-color: var(--color-tint);
         color: #fff;
-        position: fixed;
+/*        position: fixed;
         left: 0;
         right: 0;
-        top: 0;
+        top: 0;*/
+        /*z-index: 9;*/
+    }
+
+    .tab-control {
+        position: relative;
         z-index: 9;
     }
 
     #home {
-        padding-top: 44px;
+        /*padding-top: 44px;*/
+        height: 100vh;
+        position: relative;
     }
 
-    .tab-control {
-        position: sticky;
-        top: 44px;
-        z-index: 9;
-    }
 
     .content {
         position: absolute;

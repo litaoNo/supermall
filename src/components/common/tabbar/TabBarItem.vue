@@ -40,7 +40,7 @@
 </script>
 
 <style scoped>
-  #tab-bar-item {
+/*  #tab-bar-item {
     flex: 1;
   }
 
@@ -55,5 +55,23 @@
     font-size: 12px;
     margin-top: 3px;
     color: #333;
-  }
+  }*/
+
+
+#tab-bar-item {
+  flex: 1;
+}
+
+.item-icon img, .item-active-icon img {
+  width: 24px;
+  height: 24px;
+  margin-top: 5px;
+  vertical-align: middle;
+}
+
+.item-text {
+  font-size: 12px;
+  margin-top: 3px;
+  color: #333;
+}
 </style>

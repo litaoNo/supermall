@@ -1,7 +1,7 @@
 <template>
     <div class="cart">
         <nav-bar>
-            <div slot="center">购物车1({{cartLength}})</div>
+            <div slot="center">购物车2({{cartLength}})</div>
         </nav-bar>
         <!--商品的列表-->
         <cart-list></cart-list>
